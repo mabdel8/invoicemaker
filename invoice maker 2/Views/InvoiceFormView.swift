@@ -224,7 +224,11 @@ struct InvoiceFormView: View {
                 if let pdf = viewModel.generatedPDF {
                     PDFPreviewView(
                         pdfDocument: pdf,
-                        invoice: viewModel.invoice
+                        invoice: viewModel.invoice,
+                        onDismiss: {
+                            // Dismiss the invoice form when PDF preview is closed
+                            dismiss()
+                        }
                     )
                 }
             }

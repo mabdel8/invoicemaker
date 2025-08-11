@@ -93,7 +93,7 @@ struct HomeView: View {
         }
         .sheet(item: $invoiceToView) { invoice in
             if let pdf = generatedPDFForViewing {
-                PDFPreviewView(pdfDocument: pdf, invoice: invoice)
+                PDFPreviewView(pdfDocument: pdf, invoice: invoice, onDismiss: nil)
             } else {
                 ProgressView("Generating PDF...")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -11,6 +11,7 @@ import PDFKit
 struct PDFPreviewView: View {
     let pdfDocument: PDFDocument
     let invoice: Invoice
+    let onDismiss: (() -> Void)? // Optional closure to handle parent dismissal
     @Environment(\.dismiss) private var dismiss
     @State private var showingFullPDF = false
     @State private var showingShareSheet = false
@@ -97,6 +98,8 @@ struct PDFPreviewView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         dismiss()
+                        // Call the onDismiss closure to dismiss parent view if provided
+                        onDismiss?()
                     }
                 }
             }
@@ -298,6 +301,7 @@ struct ShareSheet: UIViewControllerRepresentable {
 #Preview {
     PDFPreviewView(
         pdfDocument: PDFDocument(),
-        invoice: Invoice()
+        invoice: Invoice(),
+        onDismiss: nil
     )
 }
