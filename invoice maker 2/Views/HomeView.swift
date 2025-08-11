@@ -19,6 +19,8 @@ struct HomeView: View {
     @State private var generatedPDFForViewing: PDFDocument?
     @State private var isGeneratingPDFForView = false
     @StateObject private var pdfGenerator = SimplePDFGenerator()
+    // Cache for generated PDFs to avoid regeneration
+    @State private var pdfCache: [UUID: PDFDocument] = [:]
     
     var body: some View {
         NavigationStack {
@@ -87,9 +89,18 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showingCreateInvoice) {
             InvoiceFormView(invoice: nil)
+                .onDisappear {
+                    // Refresh invoice list when form is dismissed
+                    viewModel.loadInvoices()
+                }
         }
         .sheet(item: $selectedInvoice) { invoice in
             InvoiceFormView(invoice: invoice)
+                .onDisappear {
+                    // Clear cached PDF for edited invoice and refresh list
+                    pdfCache.removeValue(forKey: invoice.id)
+                    viewModel.loadInvoices()
+                }
         }
         .sheet(item: $invoiceToView) { invoice in
             if let pdf = generatedPDFForViewing {
@@ -103,8 +114,17 @@ struct HomeView: View {
     }
     
     private func generatePDFForViewing(invoice: Invoice) {
+        // Check if PDF is already cached
+        if let cachedPDF = pdfCache[invoice.id] {
+            generatedPDFForViewing = cachedPDF
+            invoiceToView = invoice // Show the sheet immediately with cached PDF
+            return
+        }
+        
+        // Generate new PDF if not cached
         isGeneratingPDFForView = true
         generatedPDFForViewing = nil
+        invoiceToView = invoice // Show the sheet with loading state
         
         // Convert invoice to old format for PDF generation
         let invoiceData = convertToInvoiceData(invoice: invoice)
@@ -115,7 +135,7 @@ struct HomeView: View {
                 
                 if let pdf = pdf {
                     self.generatedPDFForViewing = pdf
-                    self.invoiceToView = invoice // Show the sheet
+                    self.pdfCache[invoice.id] = pdf // Cache the generated PDF
                 }
             }
         }
