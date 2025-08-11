@@ -202,6 +202,35 @@ class InvoiceFormViewModel: ObservableObject {
         }
     }
     
+    // MARK: - Combined Save and PDF Generation
+    
+    func generateAndSaveInvoice() {
+        isGeneratingPDF = true
+        errorMessage = nil
+        
+        // First, save the invoice
+        guard saveInvoice() else {
+            isGeneratingPDF = false
+            return // Error message will be set by saveInvoice()
+        }
+        
+        // Then generate PDF
+        let invoiceData = convertToInvoiceData()
+        
+        pdfGenerator.generatePDF(from: invoiceData) { [weak self] pdf in
+            DispatchQueue.main.async {
+                self?.isGeneratingPDF = false
+                
+                if let pdf = pdf {
+                    self?.generatedPDF = pdf
+                    self?.showingPDFPreview = true
+                } else {
+                    self?.errorMessage = "Invoice saved successfully, but PDF generation failed"
+                }
+            }
+        }
+    }
+    
     private func convertToInvoiceData() -> InvoiceData {
         var data = InvoiceData()
         

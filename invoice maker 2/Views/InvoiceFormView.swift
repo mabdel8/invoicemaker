@@ -178,37 +178,6 @@ struct InvoiceFormView: View {
                     ))
                     .frame(minHeight: 60)
                 }
-                
-                // Actions Section
-                Section {
-                    Button(action: {
-                        viewModel.generatePDF()
-                    }) {
-                        HStack {
-                            Image(systemName: "doc.fill")
-                            Text("Generate PDF Preview")
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                    }
-                    .disabled(viewModel.isGeneratingPDF)
-                    
-                    if viewModel.isGeneratingPDF {
-                        HStack {
-                            Spacer()
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle())
-                            Text("Generating PDF...")
-                                .foregroundColor(.secondary)
-                            Spacer()
-                        }
-                        .padding()
-                    }
-                }
-                .listRowBackground(Color.clear)
             }
             .navigationTitle(viewModel.isEditing ? "Edit Invoice" : "New Invoice")
             .navigationBarTitleDisplayMode(.inline)
@@ -220,10 +189,20 @@ struct InvoiceFormView: View {
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save") {
-                        saveInvoice()
+                    Button(action: {
+                        generateInvoice()
+                    }) {
+                        HStack(spacing: 4) {
+                            if viewModel.isGeneratingPDF {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                                    .tint(.blue)
+                            }
+                            Text(viewModel.isGeneratingPDF ? "Generating..." : "Generate")
+                        }
                     }
                     .fontWeight(.semibold)
+                    .disabled(viewModel.isGeneratingPDF)
                 }
             }
             .alert("Discard Changes?", isPresented: $showingDiscardAlert) {
@@ -255,10 +234,10 @@ struct InvoiceFormView: View {
         }
     }
     
-    private func saveInvoice() {
-        if viewModel.saveInvoice() {
-            dismiss()
-        }
+    private func generateInvoice() {
+        viewModel.generateAndSaveInvoice()
+        // Note: We don't dismiss immediately anymore since we want to show the PDF preview
+        // The view will be dismissed when user closes the PDF preview or manually cancels
     }
 }
 
