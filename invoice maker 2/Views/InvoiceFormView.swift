@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Foundation
 import SwiftData
 
 struct InvoiceFormView: View {
@@ -21,164 +22,181 @@ struct InvoiceFormView: View {
     
     var body: some View {
         NavigationStack {
-            Form {
-                // Invoice Details Section
-                Section("Invoice Details") {
-                    HStack {
-                        Text("Invoice Number")
-                        Spacer()
-                        Text(viewModel.invoice.invoiceNumber)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    DatePicker("Invoice Date",
-                              selection: $viewModel.invoiceDate,
-                              displayedComponents: .date)
-                    
-                    DatePicker("Due Date",
-                              selection: $viewModel.dueDate,
-                              displayedComponents: .date)
-                    
-                    Picker("Payment Terms", selection: $viewModel.invoice.paymentTerms) {
-                        ForEach(viewModel.paymentTermsOptions, id: \.self) { term in
-                            Text(term).tag(term)
-                        }
-                    }
-                }
-                
-                // Company Information Section
-                Section("Company Information") {
-                    TextField("Company Name *", text: $viewModel.invoice.companyName)
-                        .textContentType(.organizationName)
-                    
-                    TextField("Address (Optional)", text: Binding(
-                        get: { viewModel.invoice.companyAddress ?? "" },
-                        set: { viewModel.invoice.companyAddress = $0.isEmpty ? nil : $0 }
-                    ))
-                    .textContentType(.streetAddressLine1)
-                    
-                    TextField("City, State ZIP (Optional)", text: Binding(
-                        get: { viewModel.invoice.companyCity ?? "" },
-                        set: { viewModel.invoice.companyCity = $0.isEmpty ? nil : $0 }
-                    ))
-                    .textContentType(.addressCityAndState)
-                    
-                    TextField("Phone (Optional)", text: Binding(
-                        get: { viewModel.invoice.companyPhone ?? "" },
-                        set: { viewModel.invoice.companyPhone = $0.isEmpty ? nil : $0 }
-                    ))
-                    .textContentType(.telephoneNumber)
-                    .keyboardType(.phonePad)
-                    
-                    TextField("Email (Optional)", text: Binding(
-                        get: { viewModel.invoice.companyEmail ?? "" },
-                        set: { viewModel.invoice.companyEmail = $0.isEmpty ? nil : $0 }
-                    ))
-                    .textContentType(.emailAddress)
-                    .keyboardType(.emailAddress)
-                    .autocapitalization(.none)
-                }
-                
-                // Client Information Section
-                Section("Client Information") {
-                    TextField("Client Name *", text: $viewModel.invoice.clientName)
-                        .textContentType(.name)
-                    
-                    TextField("Address (Optional)", text: Binding(
-                        get: { viewModel.invoice.clientAddress ?? "" },
-                        set: { viewModel.invoice.clientAddress = $0.isEmpty ? nil : $0 }
-                    ))
-                    .textContentType(.streetAddressLine1)
-                    
-                    TextField("City, State ZIP (Optional)", text: Binding(
-                        get: { viewModel.invoice.clientCity ?? "" },
-                        set: { viewModel.invoice.clientCity = $0.isEmpty ? nil : $0 }
-                    ))
-                    .textContentType(.addressCityAndState)
-                    
-                    TextField("Email (Optional)", text: Binding(
-                        get: { viewModel.invoice.clientEmail ?? "" },
-                        set: { viewModel.invoice.clientEmail = $0.isEmpty ? nil : $0 }
-                    ))
-                    .textContentType(.emailAddress)
-                    .keyboardType(.emailAddress)
-                    .autocapitalization(.none)
-                }
-                
-                // Invoice Items Section
-                Section("Invoice Items") {
-                    ForEach(viewModel.invoice.items) { item in
-                        InvoiceItemRow(
-                            item: item,
-                            onUpdate: {
-                                viewModel.calculateTotals()
-                            },
-                            onDelete: {
-                                if let index = viewModel.invoice.items.firstIndex(where: { $0.id == item.id }) {
-                                    viewModel.deleteItem(at: index)
-                                }
-                            },
-                            viewModel: viewModel
-                        )
-                    }
-                    
-                    Button(action: {
-                        withAnimation {
-                            viewModel.addNewItem()
-                        }
-                    }) {
-                        Label("Add Item", systemImage: "plus.circle.fill")
-                            .foregroundColor(.blue)
-                    }
-                }
-                
-                // Totals Section
-                Section("Totals") {
-                    HStack {
-                        Text("Subtotal")
-                        Spacer()
-                        Text(viewModel.invoice.formattedSubtotal)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    HStack {
-                        Text("Tax Rate (%)")
-                        Spacer()
-                        TextField("0.00", text: $viewModel.taxRateString)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                            .frame(width: 80)
-                            .onChange(of: viewModel.taxRateString) { _ in
-                                viewModel.calculateTotals()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    CardSection(title: "Invoice Details") {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Text("Invoice Number")
+                                Spacer()
+                                Text(viewModel.invoice.invoiceNumber)
+                                    .foregroundColor(.secondary)
                             }
+
+                            DatePicker("Invoice Date",
+                                      selection: $viewModel.invoiceDate,
+                                      displayedComponents: .date)
+
+                            DatePicker("Due Date",
+                                      selection: $viewModel.dueDate,
+                                      displayedComponents: .date)
+
+                            Picker("Payment Terms", selection: $viewModel.invoice.paymentTerms) {
+                                ForEach(viewModel.paymentTermsOptions, id: \.self) { term in
+                                    Text(term).tag(term)
+                                }
+                            }
+                        }
                     }
-                    
-                    HStack {
-                        Text("Tax Amount")
-                        Spacer()
-                        Text(viewModel.invoice.formattedTaxAmount)
-                            .foregroundColor(.secondary)
+
+                    CardSection(title: "Company Information") {
+                        VStack(alignment: .leading, spacing: 12) {
+                            TextField("Company Name *", text: $viewModel.invoice.companyName)
+                                .textContentType(.organizationName)
+
+                            TextField("Address (Optional)", text: Binding(
+                                get: { viewModel.invoice.companyAddress ?? "" },
+                                set: { viewModel.invoice.companyAddress = $0.isEmpty ? nil : $0 }
+                            ))
+                            .textContentType(.streetAddressLine1)
+
+                            TextField("City, State ZIP (Optional)", text: Binding(
+                                get: { viewModel.invoice.companyCity ?? "" },
+                                set: { viewModel.invoice.companyCity = $0.isEmpty ? nil : $0 }
+                            ))
+                            .textContentType(.addressCityAndState)
+
+                            TextField("Phone (Optional)", text: Binding(
+                                get: { viewModel.invoice.companyPhone ?? "" },
+                                set: { viewModel.invoice.companyPhone = $0.isEmpty ? nil : $0 }
+                            ))
+                            .textContentType(.telephoneNumber)
+                            .keyboardType(.phonePad)
+
+                            TextField("Email (Optional)", text: Binding(
+                                get: { viewModel.invoice.companyEmail ?? "" },
+                                set: { viewModel.invoice.companyEmail = $0.isEmpty ? nil : $0 }
+                            ))
+                            .textContentType(.emailAddress)
+                            .keyboardType(.emailAddress)
+                            .autocapitalization(.none)
+                        }
                     }
-                    
-                    HStack {
-                        Text("Total")
-                            .fontWeight(.semibold)
-                        Spacer()
-                        Text(viewModel.invoice.formattedTotal)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.blue)
+
+                    CardSection(title: "Client Information") {
+                        VStack(alignment: .leading, spacing: 12) {
+                            TextField("Client Name *", text: $viewModel.invoice.clientName)
+                                .textContentType(.name)
+
+                            TextField("Address (Optional)", text: Binding(
+                                get: { viewModel.invoice.clientAddress ?? "" },
+                                set: { viewModel.invoice.clientAddress = $0.isEmpty ? nil : $0 }
+                            ))
+                            .textContentType(.streetAddressLine1)
+
+                            TextField("City, State ZIP (Optional)", text: Binding(
+                                get: { viewModel.invoice.clientCity ?? "" },
+                                set: { viewModel.invoice.clientCity = $0.isEmpty ? nil : $0 }
+                            ))
+                            .textContentType(.addressCityAndState)
+
+                            TextField("Email (Optional)", text: Binding(
+                                get: { viewModel.invoice.clientEmail ?? "" },
+                                set: { viewModel.invoice.clientEmail = $0.isEmpty ? nil : $0 }
+                            ))
+                            .textContentType(.emailAddress)
+                            .keyboardType(.emailAddress)
+                            .autocapitalization(.none)
+                        }
+                    }
+
+                    CardSection(title: "Invoice Items") {
+                        VStack(alignment: .leading, spacing: 12) {
+                            ForEach(viewModel.invoice.items) { item in
+                                InvoiceItemRow(
+                                    item: item,
+                                    onUpdate: {
+                                        viewModel.calculateTotals()
+                                    },
+                                    onDelete: {
+                                        if let index = viewModel.invoice.items.firstIndex(where: { $0.id == item.id }) {
+                                            viewModel.deleteItem(at: index)
+                                        }
+                                    },
+                                    viewModel: viewModel
+                                )
+                                Divider()
+                            }
+                            Button(action: {
+                                withAnimation {
+                                    viewModel.addNewItem()
+                                }
+                            }) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "plus.circle.fill")
+                                    Text("Add Item")
+                                        .fontWeight(.semibold)
+                                }
+                                .padding(.vertical, 10)
+                                .frame(maxWidth: .infinity)
+                                .background(AppColors.accent.opacity(0.12))
+                                .foregroundColor(AppColors.accent)
+                                .cornerRadius(10)
+                            }
+                        }
+                    }
+
+                    CardSection(title: "Totals") {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Text("Subtotal")
+                                Spacer()
+                                Text(viewModel.invoice.formattedSubtotal)
+                                    .foregroundColor(.secondary)
+                            }
+
+                            HStack {
+                                Text("Tax Rate (%)")
+                                Spacer()
+                                TextField("0.00", text: $viewModel.taxRateString)
+                                    .keyboardType(.decimalPad)
+                                    .multilineTextAlignment(.trailing)
+                                    .frame(width: 80)
+                                    .onChange(of: viewModel.taxRateString) { _ in
+                                        viewModel.calculateTotals()
+                                    }
+                            }
+
+                            HStack {
+                                Text("Tax Amount")
+                                Spacer()
+                                Text(viewModel.invoice.formattedTaxAmount)
+                                    .foregroundColor(.secondary)
+                            }
+
+                            HStack {
+                                Text("Total")
+                                    .fontWeight(.semibold)
+                                Spacer()
+                                Text(viewModel.invoice.formattedTotal)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(AppColors.accent)
+                            }
+                        }
+                    }
+
+                    CardSection(title: "Notes (Optional)") {
+                        TextEditor(text: Binding(
+                            get: { viewModel.invoice.notes ?? "" },
+                            set: { viewModel.invoice.notes = $0.isEmpty ? nil : $0 }
+                        ))
+                        .frame(minHeight: 60)
                     }
                 }
-                
-                // Notes Section
-                Section("Notes (Optional)") {
-                    TextEditor(text: Binding(
-                        get: { viewModel.invoice.notes ?? "" },
-                        set: { viewModel.invoice.notes = $0.isEmpty ? nil : $0 }
-                    ))
-                    .frame(minHeight: 60)
-                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 16)
             }
+            .background(AppColors.background.ignoresSafeArea())
             .navigationTitle(viewModel.isEditing ? "Edit Invoice" : "New Invoice")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -187,7 +205,7 @@ struct InvoiceFormView: View {
                         showingDiscardAlert = true
                     }
                 }
-                
+
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
                         generateInvoice()
@@ -196,7 +214,7 @@ struct InvoiceFormView: View {
                             if viewModel.isGeneratingPDF {
                                 ProgressView()
                                     .scaleEffect(0.8)
-                                    .tint(.blue)
+                                    .tint(AppColors.accent)
                             }
                             Text(viewModel.isGeneratingPDF ? "Generating..." : "Generate")
                         }
@@ -205,6 +223,7 @@ struct InvoiceFormView: View {
                     .disabled(viewModel.isGeneratingPDF)
                 }
             }
+            .tint(AppColors.accent)
             .alert("Discard Changes?", isPresented: $showingDiscardAlert) {
                 Button("Discard", role: .destructive) {
                     dismiss()
@@ -226,7 +245,6 @@ struct InvoiceFormView: View {
                         pdfDocument: pdf,
                         invoice: viewModel.invoice,
                         onDismiss: {
-                            // Dismiss the invoice form when PDF preview is closed
                             dismiss()
                         }
                     )
@@ -324,7 +342,7 @@ struct InvoiceItemRow: View {
                     Text(item.formattedAmount)
                         .padding(.vertical, 8)
                         .padding(.horizontal, 12)
-                        .background(Color.gray.opacity(0.1))
+                        .background(AppColors.accent.opacity(0.12))
                         .cornerRadius(5)
                 }
             }
@@ -336,6 +354,73 @@ struct InvoiceItemRow: View {
             quantityString = String(format: "%.2f", NSDecimalNumber(decimal: item.quantity).doubleValue)
             rateString = String(format: "%.2f", NSDecimalNumber(decimal: item.rate).doubleValue)
         }
+    }
+}
+
+// MARK: - Shared Styles
+
+private struct CardSection<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: Content
+    @Environment(\.colorScheme) private var colorScheme
+
+    init(title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.headline)
+                .foregroundColor(.primary)
+
+            VStack(alignment: .leading, spacing: 12) {
+                content
+            }
+            .padding(16)
+            .background(Color.white)
+            .cornerRadius(16)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(hairlineColor, lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.06), radius: 20, x: 0, y: 8)
+        }
+    }
+
+    private var hairlineColor: Color {
+        if colorScheme == .dark {
+            return Color(red: 0x2D/255.0, green: 0x2D/255.0, blue: 0x2F/255.0).opacity(0.25)
+        } else {
+            return Color(red: 0xE8/255.0, green: 0xE8/255.0, blue: 0xED/255.0)
+        }
+    }
+}
+
+private enum AppColors {
+    static let accent: Color = Color(hex: "#2563EB")
+    static let background: Color = Color(hex: "#F7F8FB")
+}
+
+private extension Color {
+    init(hex: String) {
+        let r, g, b, a: Double
+        var hexString = hex.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        if hexString.hasPrefix("#") { hexString.removeFirst() }
+        if hexString.count == 6 { hexString.append("FF") }
+
+        let scanner = Scanner(string: hexString)
+        var hexNumber: UInt64 = 0
+        if scanner.scanHexInt64(&hexNumber) {
+            r = Double((hexNumber & 0xFF000000) >> 24) / 255
+            g = Double((hexNumber & 0x00FF0000) >> 16) / 255
+            b = Double((hexNumber & 0x0000FF00) >> 8) / 255
+            a = Double(hexNumber & 0x000000FF) / 255
+        } else {
+            r = 1; g = 1; b = 1; a = 1
+        }
+        self.init(.sRGB, red: r, green: g, blue: b, opacity: a)
     }
 }
 
