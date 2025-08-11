@@ -1,0 +1,86 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Icon must end with two \r
+Icon
+
+# Thumbnails
+._*
+
+# Files that might appear on external disk
+.Spotlight-V100
+.Trashes
+
+# Xcode
+## Build artifacts
+build/
+DerivedData/
+
+## User-specific settings
+**/xcuserdata/
+*.xcuserstate
+*.moved-aside
+
+## Project metadata backups
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+
+## Source control metadata
+*.xccheckout
+*.xcscmblueprint
+
+# Swift Package Manager
+.swiftpm/
+.build/
+
+# CocoaPods (uncomment if you use Pods and don't vendor them)
+# Pods/
+# Podfile.lock
+
+# Carthage
+Carthage/Build/
+
+# Accio dependency manager
+Dependencies/
+.accio/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+
+# Archives and symbols
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+# IDE settings
+.idea/
+.vscode/
+
+# SwiftLint/formatters caches
+.swiftlint.cache
+
+# Temporary files
+*.swp
+*.swo
+*.tmp
+*.log
+
+# Explicitly ignore current workspace user data paths (already covered by **/xcuserdata/)
+invoice maker 2.xcodeproj/project.xcworkspace/xcuserdata/
+invoice maker 2.xcodeproj/xcuserdata/
+
