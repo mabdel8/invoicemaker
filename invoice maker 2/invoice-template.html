@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Template</title>
+    <link rel="stylesheet" href="invoice-styles.css">
+</head>
+<body>
+    <div class="invoice-container">
+        <!-- Header Section -->
+        <header class="invoice-header">
+            <div class="company-info">
+                <div class="logo-container">
+                    <img src="{{COMPANY_LOGO}}" alt="Company Logo" class="company-logo" id="companyLogo">
+                </div>
+                <div class="company-details">
+                    <h1 class="company-name">{{COMPANY_NAME}}</h1>
+                    <p class="company-tagline">{{COMPANY_TAGLINE}}</p>
+                </div>
+            </div>
+            <div class="invoice-title-section">
+                <h2 class="invoice-title">INVOICE</h2>
+                <p class="invoice-subtitle">{{INVOICE_SUBTITLE}}</p>
+            </div>
+        </header>
+
+        <!-- Company and Invoice Details -->
+        <section class="invoice-details">
+            <div class="sender-info">
+                <h3>{{SENDER_LABEL}}</h3>
+                <div class="address-block">
+                    <p class="company-name-detail">{{COMPANY_NAME_DETAIL}}</p>
+                    <p class="address-line">{{COMPANY_ADDRESS_LINE_1}}</p>
+                    <p class="address-line">{{COMPANY_ADDRESS_LINE_2}}</p>
+                    <p class="contact-info">{{COMPANY_PHONE}}</p>
+                    <p class="contact-info">{{COMPANY_EMAIL}}</p>
+                    <p class="contact-info">{{COMPANY_WEBSITE}}</p>
+                </div>
+            </div>
+
+            <div class="invoice-meta">
+                <div class="meta-row">
+                    <span class="meta-label">Invoice Number:</span>
+                    <span class="meta-value">{{INVOICE_NUMBER}}</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">P.O./S.O. Number:</span>
+                    <span class="meta-value">{{PO_SO_NUMBER}}</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Date:</span>
+                    <span class="meta-value">{{INVOICE_DATE}}</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Payment Terms:</span>
+                    <span class="meta-value">{{PAYMENT_TERMS}}</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Due Date:</span>
+                    <span class="meta-value">{{DUE_DATE}}</span>
+                </div>
+                <div class="meta-row amount-due-header">
+                    <span class="meta-label">Amount Due ({{CURRENCY}}):</span>
+                    <span class="meta-value amount-due">{{TOTAL_AMOUNT}}</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bill To Section -->
+        <section class="billing-section">
+            <div class="bill-to">
+                <h3>BILL TO</h3>
+                <div class="address-block">
+                    <p class="client-name">{{CLIENT_NAME}}</p>
+                    <p class="address-line">{{CLIENT_ADDRESS_LINE_1}}</p>
+                    <p class="address-line">{{CLIENT_ADDRESS_LINE_2}}</p>
+                    <p class="contact-info">{{CLIENT_EMAIL}}</p>
+                    <p class="contact-info">{{CLIENT_PHONE}}</p>
+                </div>
+            </div>
+
+            <div class="ship-to" id="shipToSection">
+                <h3>SHIP TO</h3>
+                <div class="address-block">
+                    <p class="address-line">{{SHIP_TO_ADDRESS_LINE_1}}</p>
+                    <p class="address-line">{{SHIP_TO_ADDRESS_LINE_2}}</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Items Table -->
+        <section class="items-section">
+            <table class="items-table">
+                <thead>
+                    <tr class="table-header">
+                        <th class="item-description">{{ITEM_HEADER_DESCRIPTION}}</th>
+                        <th class="item-quantity">Quantity</th>
+                        <th class="item-rate">Rate</th>
+                        <th class="item-amount">Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="itemsTableBody">
+                    <!-- Items will be populated here -->
+                    {{#ITEMS}}
+                    <tr class="item-row">
+                        <td class="item-description-cell">
+                            <div class="item-name">{{ITEM_NAME}}</div>
+                            <div class="item-description-text">{{ITEM_DESCRIPTION}}</div>
+                        </td>
+                        <td class="item-quantity-cell">{{ITEM_QUANTITY}}</td>
+                        <td class="item-rate-cell">{{ITEM_RATE}}</td>
+                        <td class="item-amount-cell">{{ITEM_AMOUNT}}</td>
+                    </tr>
+                    {{/ITEMS}}
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Totals Section -->
+        <section class="totals-section">
+            <div class="totals-container">
+                <div class="totals-row">
+                    <span class="total-label">Subtotal:</span>
+                    <span class="total-value">{{SUBTOTAL}}</span>
+                </div>
+                <div class="totals-row" id="taxRow">
+                    <span class="total-label">{{TAX_LABEL}} ({{TAX_RATE}}%):</span>
+                    <span class="total-value">{{TAX_AMOUNT}}</span>
+                </div>
+                <div class="totals-row" id="discountRow">
+                    <span class="total-label">Discount:</span>
+                    <span class="total-value">-{{DISCOUNT_AMOUNT}}</span>
+                </div>
+                <div class="totals-row total-final">
+                    <span class="total-label">Total:</span>
+                    <span class="total-value">{{TOTAL_AMOUNT}}</span>
+                </div>
+                <div class="totals-row" id="amountPaidRow">
+                    <span class="total-label">Amount Paid:</span>
+                    <span class="total-value">{{AMOUNT_PAID}}</span>
+                </div>
+                <div class="totals-row balance-due">
+                    <span class="total-label">Balance Due:</span>
+                    <span class="total-value">{{BALANCE_DUE}}</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Notes and Terms -->
+        <section class="notes-section">
+            <div class="notes" id="notesSection">
+                <h4>Notes</h4>
+                <p>{{NOTES}}</p>
+            </div>
+
+            <div class="terms" id="termsSection">
+                <h4>Terms</h4>
+                <p>{{TERMS}}</p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="invoice-footer">
+            <p>{{FOOTER_TEXT}}</p>
+        </footer>
+    </div>
+
+    <!-- Page break helper for PDF generation -->
+    <div class="page-break"></div>
+</body>
+</html>
+
