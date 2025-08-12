@@ -13,10 +13,12 @@ struct PDFPreviewView: View {
     let invoice: Invoice
     let onDismiss: (() -> Void)? // Optional closure to handle parent dismissal
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var storeManager: StoreKitManager
     @State private var showingFullPDF = false
     @State private var showingShareSheet = false
     @State private var showingExportSuccess = false
     @State private var exportError: String?
+    @State private var showingPaywall = false
     
     var body: some View {
         NavigationStack {
@@ -31,25 +33,49 @@ struct PDFPreviewView: View {
                 VStack(spacing: 16) {
                     HStack(spacing: 16) {
                         // Export Button
-                        Button(action: exportPDF) {
-                            Label("Export", systemImage: "square.and.arrow.down")
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.blue)
-                                .foregroundColor(.white)
-                                .cornerRadius(10)
+                        Button(action: {
+                            if storeManager.isSubscribed() {
+                                exportPDF()
+                            } else {
+                                showingPaywall = true
+                            }
+                        }) {
+                            HStack {
+                                Label("Export", systemImage: "square.and.arrow.down")
+                                if !storeManager.isSubscribed() {
+                                    Image(systemName: "crown.fill")
+                                        .foregroundColor(.yellow)
+                                        .font(.caption)
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(storeManager.isSubscribed() ? Color.blue : Color.gray)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
                         }
                         
                         // Share Button
                         Button(action: {
-                            showingShareSheet = true
+                            if storeManager.isSubscribed() {
+                                showingShareSheet = true
+                            } else {
+                                showingPaywall = true
+                            }
                         }) {
-                            Label("Share", systemImage: "square.and.arrow.up")
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.green)
-                                .foregroundColor(.white)
-                                .cornerRadius(10)
+                            HStack {
+                                Label("Share", systemImage: "square.and.arrow.up")
+                                if !storeManager.isSubscribed() {
+                                    Image(systemName: "crown.fill")
+                                        .foregroundColor(.yellow)
+                                        .font(.caption)
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(storeManager.isSubscribed() ? Color.green : Color.gray)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
                         }
                     }
                     
@@ -108,6 +134,9 @@ struct PDFPreviewView: View {
             }
             .sheet(isPresented: $showingShareSheet) {
                 ShareSheet(pdfDocument: pdfDocument, invoice: invoice)
+            }
+            .fullScreenCover(isPresented: $showingPaywall) {
+                PaywallView(isModal: true)
             }
             .alert("Export Successful", isPresented: $showingExportSuccess) {
                 Button("OK") { }

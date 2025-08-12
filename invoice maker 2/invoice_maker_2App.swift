@@ -10,6 +10,8 @@ import SwiftData
 
 @main
 struct invoice_maker_2App: App {
+    @StateObject private var appSettings = AppSettings.shared
+    @StateObject private var storeManager = StoreKitManager.shared
     @State private var showingErrorAlert = false
     @State private var errorMessage = ""
     
@@ -40,8 +42,10 @@ struct invoice_maker_2App: App {
     var body: some Scene {
         WindowGroup {
             if let container = sharedModelContainer {
-                HomeView()
+                AppRootView()
                     .modelContainer(container)
+                    .environmentObject(appSettings)
+                    .environmentObject(storeManager)
             } else {
                 // Show error view when container fails to initialize
                 DataErrorView()

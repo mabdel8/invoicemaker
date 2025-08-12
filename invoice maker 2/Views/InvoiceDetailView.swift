@@ -11,12 +11,14 @@ import PDFKit
 struct InvoiceDetailView: View {
     let invoice: Invoice
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var storeManager: StoreKitManager
     @StateObject private var pdfGenerator = SimplePDFGenerator()
     @State private var generatedPDF: PDFDocument?
     @State private var isGeneratingPDF = false
     @State private var showingEditInvoice = false
     @State private var showingShareSheet = false
     @State private var errorMessage: String?
+    @State private var showingPaywall = false
     
     var body: some View {
         NavigationStack {
@@ -75,14 +77,25 @@ struct InvoiceDetailView: View {
                         
                         // Share Button
                         Button(action: {
-                            showingShareSheet = true
+                            if storeManager.isSubscribed() {
+                                showingShareSheet = true
+                            } else {
+                                showingPaywall = true
+                            }
                         }) {
-                            Label("Share", systemImage: "square.and.arrow.up")
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.green)
-                                .foregroundColor(.white)
-                                .cornerRadius(10)
+                            HStack {
+                                Label("Share", systemImage: "square.and.arrow.up")
+                                if !storeManager.isSubscribed() {
+                                    Image(systemName: "crown.fill")
+                                        .foregroundColor(.yellow)
+                                        .font(.caption)
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(storeManager.isSubscribed() ? Color.green : Color.gray)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
                         }
                     }
                     .padding()
@@ -153,6 +166,9 @@ struct InvoiceDetailView: View {
             if let pdf = generatedPDF {
                 ShareSheet(pdfDocument: pdf, invoice: invoice)
             }
+        }
+        .fullScreenCover(isPresented: $showingPaywall) {
+            PaywallView(isModal: true)
         }
         .alert("Error", isPresented: .constant(errorMessage != nil)) {
             Button("OK") {
