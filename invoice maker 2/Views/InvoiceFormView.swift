@@ -28,22 +28,50 @@ struct InvoiceFormView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             HStack {
                                 Text("Invoice Number")
+                                    .rowLabelStyle()
                                 Spacer()
                                 Text(viewModel.invoice.invoiceNumber)
-                                    .foregroundColor(.secondary)
+                                    .valueTextStyle()
+                                    .monospacedDigit()
                             }
 
                             DatePicker("Invoice Date",
                                       selection: $viewModel.invoiceDate,
                                       displayedComponents: .date)
+                            .transaction { $0.animation = nil }
+                            .labelsHidden()
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .font(.system(size: 17))
+                            .monospacedDigit()
+                            .rowContainerLabel("Invoice Date")
 
                             DatePicker("Due Date",
                                       selection: $viewModel.dueDate,
                                       displayedComponents: .date)
+                            .transaction { $0.animation = nil }
+                            .labelsHidden()
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .font(.system(size: 17))
+                            .monospacedDigit()
+                            .rowContainerLabel("Due Date")
 
-                            Picker("Payment Terms", selection: $viewModel.invoice.paymentTerms) {
-                                ForEach(viewModel.paymentTermsOptions, id: \.self) { term in
-                                    Text(term).tag(term)
+                            HStack {
+                                Text("Payment Terms")
+                                    .rowLabelStyle()
+                                Spacer()
+                                Menu {
+                                    ForEach(viewModel.paymentTermsOptions, id: \.self) { term in
+                                        Button(term) {
+                                            viewModel.invoice.paymentTerms = term
+                                        }
+                                    }
+                                } label: {
+                                    HStack(spacing: 6) {
+                                        Text(viewModel.invoice.paymentTerms)
+                                            .valueTextStyle()
+                                        Image(systemName: "chevron.up.chevron.down")
+                                            .foregroundColor(.secondary)
+                                    }
                                 }
                             }
                         }
@@ -125,7 +153,7 @@ struct InvoiceFormView: View {
                                     },
                                     viewModel: viewModel
                                 )
-                                Divider()
+                                HairlineDivider()
                             }
                             Button(action: {
                                 withAnimation {
@@ -150,18 +178,22 @@ struct InvoiceFormView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             HStack {
                                 Text("Subtotal")
+                                    .rowLabelStyle()
                                 Spacer()
                                 Text(viewModel.invoice.formattedSubtotal)
-                                    .foregroundColor(.secondary)
+                                    .valueTextStyle()
                             }
 
                             HStack {
                                 Text("Tax Rate (%)")
+                                    .rowLabelStyle()
                                 Spacer()
                                 TextField("0.00", text: $viewModel.taxRateString)
                                     .keyboardType(.decimalPad)
                                     .multilineTextAlignment(.trailing)
                                     .frame(width: 80)
+                                    .font(.system(size: 17))
+                                    .monospacedDigit()
                                     .onChange(of: viewModel.taxRateString) { _ in
                                         viewModel.calculateTotals()
                                     }
@@ -169,16 +201,18 @@ struct InvoiceFormView: View {
 
                             HStack {
                                 Text("Tax Amount")
+                                    .rowLabelStyle()
                                 Spacer()
                                 Text(viewModel.invoice.formattedTaxAmount)
-                                    .foregroundColor(.secondary)
+                                    .valueTextStyle()
                             }
 
                             HStack {
                                 Text("Total")
-                                    .fontWeight(.semibold)
+                                    .rowLabelStyle()
                                 Spacer()
                                 Text(viewModel.invoice.formattedTotal)
+                                    .valueTextStyle()
                                     .fontWeight(.semibold)
                                     .foregroundColor(AppColors.accent)
                             }
@@ -205,7 +239,6 @@ struct InvoiceFormView: View {
                         showingDiscardAlert = true
                     }
                 }
-
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
                         generateInvoice()
@@ -370,12 +403,15 @@ private struct CardSection<Content: View>: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.headline)
-                .foregroundColor(.primary)
-
+        VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 12) {
+                // Subtle in-card header
+                Text(title)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.primary)
+
+                HairlineDivider()
+
                 content
             }
             .padding(16)
@@ -398,9 +434,61 @@ private struct CardSection<Content: View>: View {
     }
 }
 
+private struct HairlineDivider: View {
+    @Environment(\.colorScheme) private var colorScheme
+    var body: some View {
+        Rectangle()
+            .fill(hairlineColor)
+            .frame(height: 1)
+            .padding(.horizontal, -8) // 8pt negative inset
+    }
+
+    private var hairlineColor: Color {
+        if colorScheme == .dark {
+            return Color(red: 0x2D/255.0, green: 0x2D/255.0, blue: 0x2F/255.0).opacity(0.25)
+        } else {
+            return Color(red: 0xE8/255.0, green: 0xE8/255.0, blue: 0xED/255.0)
+        }
+    }
+}
+
 private enum AppColors {
     static let accent: Color = Color(hex: "#2563EB")
     static let background: Color = Color(hex: "#F7F8FB")
+}
+
+// MARK: - Typography Helpers
+private struct RowLabelStyle: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .font(.system(size: 15, weight: .medium))
+            .kerning(-0.2/1000) // subtle tracking adjustment
+            .foregroundColor(.secondary)
+    }
+}
+
+private struct ValueTextStyle: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .font(.system(size: 17, weight: .regular))
+            .foregroundColor(.primary)
+            .monospacedDigit()
+    }
+}
+
+// MARK: - Status Pill Component
+private extension View {
+    func rowLabelStyle() -> some View { modifier(RowLabelStyle()) }
+    func valueTextStyle() -> some View { modifier(ValueTextStyle()) }
+
+    // Helper to wrap a trailing control with a leading label matching our row style
+    func rowContainerLabel(_ label: String) -> some View {
+        HStack {
+            Text(label).rowLabelStyle()
+            Spacer()
+            self
+        }
+    }
 }
 
 private extension Color {
