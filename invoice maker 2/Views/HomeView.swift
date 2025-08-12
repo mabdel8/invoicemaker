@@ -282,16 +282,16 @@ struct InvoiceCardView: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 0) {
-                // Status stripe
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                // Status stripe - fills full height and aligns to left edge
+                RoundedRectangle(cornerRadius: 0, style: .continuous)
                     .fill(statusColor.opacity(0.6))
                     .frame(width: 3)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        RoundedRectangle(cornerRadius: 0, style: .continuous)
                             .stroke(statusColor.opacity(0.8), lineWidth: 0.5)
                     )
                 
-                HStack(spacing: 16) {
+                HStack(spacing: 12) {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack(alignment: .center, spacing: 0) {
                             HStack(spacing: 12) {
@@ -300,6 +300,8 @@ struct InvoiceCardView: View {
                                     .monospacedDigit()
                                     .foregroundColor(.primary)
                                     .layoutPriority(1)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
                                 
                                 StatusPill(status: invoice.status)
                                     .fixedSize()
