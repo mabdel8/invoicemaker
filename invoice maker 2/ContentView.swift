@@ -49,13 +49,14 @@ struct OldInvoiceItem: Identifiable {
     var amount: String
 }
 
-// PDF Generator
+// PDF Generator with Optimized WebView Rendering
 class SimplePDFGenerator: NSObject, ObservableObject {
     @Published var isGenerating = false
     @Published var generatedPDF: PDFDocument?
     
     private var webView: WKWebView?
     private var completion: ((PDFDocument?) -> Void)?
+    private var contentHeight: CGFloat = 792 // Default to one page
     
     override init() {
         super.init()
@@ -68,15 +69,32 @@ class SimplePDFGenerator: NSObject, ObservableObject {
         // Configure preferences for better rendering
         config.preferences.setValue(true, forKey: "allowFileAccessFromFileURLs")
         
-        // Create webview with letter width but extended height to render all content
-        // The extended height allows all content to render before pagination
-        webView = WKWebView(frame: CGRect(x: 0, y: 0, width: 612, height: 5000), configuration: config)
+        // Enable JavaScript for content size calculation
+        config.preferences.javaScriptEnabled = true
+        
+        // Start with letter width and standard height - will adjust dynamically
+        webView = WKWebView(frame: CGRect(x: 0, y: 0, width: 612, height: 792), configuration: config)
         webView?.navigationDelegate = self
         
         // Configure scrollView for proper rendering
         webView?.scrollView.isScrollEnabled = true
         webView?.scrollView.showsVerticalScrollIndicator = false
         webView?.scrollView.showsHorizontalScrollIndicator = false
+        
+        // Add observer for content size changes
+        webView?.scrollView.addObserver(self, forKeyPath: "contentSize", options: .new, context: nil)
+    }
+    
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+        if keyPath == "contentSize" {
+            if let scrollView = object as? UIScrollView {
+                contentHeight = scrollView.contentSize.height
+            }
+        }
+    }
+    
+    deinit {
+        webView?.scrollView.removeObserver(self, forKeyPath: "contentSize")
     }
     
     func generatePDF(from invoiceData: InvoiceData, completion: @escaping (PDFDocument?) -> Void) {
@@ -492,10 +510,26 @@ class SimplePDFGenerator: NSObject, ObservableObject {
 
 extension SimplePDFGenerator: WKNavigationDelegate {
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        // Wait for content to fully render before creating PDF
-        // Increased time ensures complex invoices render completely
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            self.createPaginatedPDF(from: webView)
+        // Calculate actual content height using JavaScript
+        webView.evaluateJavaScript("document.body.scrollHeight") { [weak self] (result, error) in
+            guard let self = self else { return }
+            
+            if let height = result as? CGFloat {
+                self.contentHeight = height
+                
+                // Resize WebView to actual content height for accurate rendering
+                webView.frame = CGRect(x: 0, y: 0, width: 612, height: height)
+                
+                // Wait for resize to complete, then create PDF
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    self.createPaginatedPDF(from: webView)
+                }
+            } else {
+                // Fallback to default timing if JavaScript fails
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    self.createPaginatedPDF(from: webView)
+                }
+            }
         }
     }
     

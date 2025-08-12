@@ -19,14 +19,14 @@ struct HomeView: View {
     @State private var generatedPDFForViewing: PDFDocument?
     @State private var isGeneratingPDFForView = false
     @StateObject private var pdfGenerator = SimplePDFGenerator()
-    // Cache for generated PDFs to avoid regeneration
-    @State private var pdfCache: [UUID: PDFDocument] = [:]
+    // Use the new PDF cache manager instead of local dictionary
+    @StateObject private var pdfCacheManager = PDFCacheManager.shared
     
     var body: some View {
         NavigationStack {
             ZStack {
                 // Background
-                Color(.systemGroupedBackground)
+                Color.white
                     .ignoresSafeArea()
                 
                 // Main content
@@ -103,8 +103,8 @@ struct HomeView: View {
         .sheet(item: $selectedInvoice) { invoice in
             InvoiceFormView(invoice: invoice)
                 .onDisappear {
-                    // Clear cached PDF for edited invoice and refresh list
-                    pdfCache.removeValue(forKey: invoice.id)
+                    // Clear cached PDF for edited invoice using cache manager and refresh list
+                    pdfCacheManager.remove(invoice.id)
                     viewModel.loadInvoices()
                 }
         }
@@ -120,8 +120,8 @@ struct HomeView: View {
     }
     
     private func generatePDFForViewing(invoice: Invoice) {
-        // Check if PDF is already cached
-        if let cachedPDF = pdfCache[invoice.id] {
+        // Check if PDF is already cached using the new cache manager
+        if let cachedPDF = pdfCacheManager.get(invoice.id) {
             generatedPDFForViewing = cachedPDF
             invoiceToView = invoice // Show the sheet immediately with cached PDF
             return
@@ -141,7 +141,8 @@ struct HomeView: View {
                 
                 if let pdf = pdf {
                     self.generatedPDFForViewing = pdf
-                    self.pdfCache[invoice.id] = pdf // Cache the generated PDF
+                    // Cache the generated PDF using the new cache manager
+                    self.pdfCacheManager.set(invoice.id, pdf: pdf)
                 }
             }
         }

@@ -74,6 +74,31 @@ struct InvoiceFormView: View {
                                     }
                                 }
                             }
+                            
+                            HStack {
+                                Text("Status")
+                                    .rowLabelStyle()
+                                Spacer()
+                                Menu {
+                                    ForEach(InvoiceStatus.allCases, id: \.self) { status in
+                                        Button(action: {
+                                            viewModel.invoice.status = status
+                                        }) {
+                                            Label(status.rawValue, systemImage: statusIcon(for: status))
+                                        }
+                                    }
+                                } label: {
+                                    HStack(spacing: 6) {
+                                        Circle()
+                                            .fill(Color(statusColor(for: viewModel.invoice.status)))
+                                            .frame(width: 8, height: 8)
+                                        Text(viewModel.invoice.status.rawValue)
+                                            .valueTextStyle()
+                                        Image(systemName: "chevron.up.chevron.down")
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                            }
                         }
                     }
 
@@ -474,6 +499,26 @@ private struct ValueTextStyle: ViewModifier {
             .foregroundColor(.primary)
             .monospacedDigit()
     }
+}
+
+// MARK: - Helper Functions
+private func statusIcon(for status: InvoiceStatus) -> String {
+    switch status {
+    case .draft:
+        return "doc.text"
+    case .sent:
+        return "paperplane"
+    case .paid:
+        return "checkmark.circle.fill"
+    case .overdue:
+        return "exclamationmark.triangle"
+    case .cancelled:
+        return "xmark.circle"
+    }
+}
+
+private func statusColor(for status: InvoiceStatus) -> String {
+    return status.color
 }
 
 // MARK: - Status Pill Component
