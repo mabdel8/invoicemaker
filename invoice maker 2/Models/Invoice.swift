@@ -14,7 +14,6 @@ final class Invoice {
     var invoiceNumber: String = ""
     var invoiceDate: Date = Date()
     var dueDate: Date = Date()
-    var paymentTerms: String = "NET-30"
     
     // Company Information (Optional fields)
     var companyName: String = ""
@@ -104,7 +103,7 @@ enum InvoiceStatus: String, Codable, CaseIterable {
     
     var color: String {
         switch self {
-        case .draft: return "gray"
+        case .draft: return "purple"
         case .sent: return "blue"
         case .paid: return "green"
         case .overdue: return "red"

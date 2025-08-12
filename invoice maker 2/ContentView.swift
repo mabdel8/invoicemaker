@@ -25,7 +25,6 @@ struct InvoiceData {
     var invoiceNumber = "INV-001"
     var invoiceDate = "December 8, 2024"
     var dueDate = "January 7, 2025"
-    var paymentTerms = "NET-30"
     
     var subtotal = "$1,000.00"
     var taxRate = "8.25"
@@ -459,10 +458,6 @@ class SimplePDFGenerator: NSObject, ObservableObject {
                             <span class="meta-label">Due Date:</span>
                             <span class="meta-value">\(data.dueDate)</span>
                         </div>
-                        <div class="meta-row">
-                            <span class="meta-label">Terms:</span>
-                            <span class="meta-value">\(data.paymentTerms)</span>
-                        </div>
                     </div>
                 </div>
                 
@@ -654,7 +649,6 @@ struct ContentView: View {
                         TextField("Invoice Number", text: $invoiceData.invoiceNumber)
                         TextField("Invoice Date", text: $invoiceData.invoiceDate)
                         TextField("Due Date", text: $invoiceData.dueDate)
-                        TextField("Payment Terms", text: $invoiceData.paymentTerms)
                     }
                     
                     Section("Client Information") {

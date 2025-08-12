@@ -168,7 +168,6 @@ struct HomeView: View {
         data.invoiceNumber = invoice.invoiceNumber
         data.invoiceDate = invoice.formattedInvoiceDate
         data.dueDate = invoice.formattedDueDate
-        data.paymentTerms = invoice.paymentTerms
         
         // Financial
         data.subtotal = invoice.formattedSubtotal
@@ -470,7 +469,7 @@ private enum StatusColors {
     
     var color: Color {
         switch self {
-        case .draft: return Color(hex: "#9CA3AF")
+        case .draft: return Color(hex: "#9333EA")  // Purple instead of gray
         case .sent: return Color(hex: "#2563EB")
         case .paid: return Color(hex: "#16A34A")
         case .cancelled: return Color(hex: "#F59E0B")
@@ -480,7 +479,7 @@ private enum StatusColors {
     
     var fill: Color {
         switch self {
-        case .draft: return Color(hex: "#9CA3AF").opacity(0.08)
+        case .draft: return Color(hex: "#9333EA").opacity(0.08)  // Purple instead of gray
         case .sent: return Color(hex: "#2563EB").opacity(0.08)
         case .paid: return Color(hex: "#16A34A").opacity(0.08)
         case .cancelled: return Color(hex: "#F59E0B").opacity(0.08)

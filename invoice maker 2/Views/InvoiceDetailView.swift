@@ -203,7 +203,6 @@ struct InvoiceDetailView: View {
         data.invoiceNumber = invoice.invoiceNumber
         data.invoiceDate = invoice.formattedInvoiceDate
         data.dueDate = invoice.formattedDueDate
-        data.paymentTerms = invoice.paymentTerms
         
         // Financial
         data.subtotal = invoice.formattedSubtotal

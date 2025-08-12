@@ -54,26 +54,6 @@ struct InvoiceFormView: View {
                             .font(.system(size: 17))
                             .monospacedDigit()
                             .rowContainerLabel("Due Date")
-
-                            HStack {
-                                Text("Payment Terms")
-                                    .rowLabelStyle()
-                                Spacer()
-                                Menu {
-                                    ForEach(viewModel.paymentTermsOptions, id: \.self) { term in
-                                        Button(term) {
-                                            viewModel.invoice.paymentTerms = term
-                                        }
-                                    }
-                                } label: {
-                                    HStack(spacing: 6) {
-                                        Text(viewModel.invoice.paymentTerms)
-                                            .valueTextStyle()
-                                        Image(systemName: "chevron.up.chevron.down")
-                                            .foregroundColor(.secondary)
-                                    }
-                                }
-                            }
                             
                             HStack {
                                 Text("Status")
