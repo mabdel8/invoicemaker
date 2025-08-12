@@ -25,6 +25,10 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ZStack {
+                // Background
+                Color(.systemGroupedBackground)
+                    .ignoresSafeArea()
+                
                 // Main content
                 if viewModel.invoices.isEmpty && viewModel.searchText.isEmpty {
                     EmptyStateView()
@@ -46,11 +50,13 @@ struct HomeView: View {
                     HStack {
                         Spacer()
                         CreateInvoiceButton(showingCreateInvoice: $showingCreateInvoice)
-                            .padding()
+                            .padding(.trailing, 24)
+                            .padding(.bottom, 24)
                     }
                 }
             }
             .navigationTitle("Invoices")
+            .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
@@ -215,146 +221,176 @@ struct InvoiceListContent: View {
     let onInvoiceTap: (Invoice) -> Void
     
     var body: some View {
-        List {
-            // Invoices Section
-            Section(header: Text("Invoices")) {
+        ScrollView {
+            LazyVStack(spacing: 16) {
                 ForEach(viewModel.filteredInvoices) { invoice in
-                    InvoiceRowView(
+                    InvoiceCardView(
                         invoice: invoice,
-                        onTap: {
-                            onInvoiceTap(invoice)
-                        }
+                        onTap: { onInvoiceTap(invoice) },
+                        onEdit: { selectedInvoice = invoice },
+                        onDelete: { viewModel.deleteInvoice(invoice) },
+                        onDuplicate: { _ = viewModel.duplicateInvoice(invoice) },
+                        onStatusChange: { status in viewModel.updateInvoiceStatus(invoice, status: status) }
                     )
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            viewModel.deleteInvoice(invoice)
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                        
-                        Button {
-                            selectedInvoice = invoice
-                        } label: {
-                            Label("Edit", systemImage: "pencil")
-                        }
-                        .tint(.blue)
-                        
-                        Button {
-                            _ = viewModel.duplicateInvoice(invoice)
-                        } label: {
-                            Label("Duplicate", systemImage: "doc.on.doc")
-                        }
-                        .tint(.purple)
-                    }
-                    .contextMenu {
-                        Button {
-                            selectedInvoice = invoice
-                        } label: {
-                            Label("Edit", systemImage: "pencil")
-                        }
-                        
-                        Button {
-                            _ = viewModel.duplicateInvoice(invoice)
-                        } label: {
-                            Label("Duplicate", systemImage: "doc.on.doc")
-                        }
-                        
-                        Divider()
-                        
-                        Menu {
-                            ForEach(InvoiceStatus.allCases, id: \.self) { status in
-                                Button {
-                                    viewModel.updateInvoiceStatus(invoice, status: status)
-                                } label: {
-                                    Label(status.rawValue, systemImage: "circle.fill")
-                                }
-                            }
-                        } label: {
-                            Label("Change Status", systemImage: "flag")
-                        }
-                        
-                        Divider()
-                        
-                        Button(role: .destructive) {
-                            viewModel.deleteInvoice(invoice)
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
                 }
-                .onDelete(perform: viewModel.deleteInvoices)
             }
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
+            .padding(.bottom, 100) // Space for FAB
         }
-        .listStyle(InsetGroupedListStyle())
     }
 }
 
 
-// Invoice row view
-struct InvoiceRowView: View {
+// Invoice card view with new styling
+struct InvoiceCardView: View {
     let invoice: Invoice
     let onTap: () -> Void
+    let onEdit: () -> Void
+    let onDelete: () -> Void
+    let onDuplicate: () -> Void
+    let onStatusChange: (InvoiceStatus) -> Void
+    
+    @State private var isPressed = false
     
     var body: some View {
         Button(action: onTap) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text(invoice.invoiceNumber)
-                            .font(.headline)
+            HStack(spacing: 0) {
+                // Status stripe
+                Rectangle()
+                    .fill(statusColor)
+                    .frame(width: 4)
+                
+                HStack(spacing: 16) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(alignment: .center, spacing: 0) {
+                            HStack(spacing: 12) {
+                                Text(invoice.invoiceNumber)
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .foregroundColor(.primary)
+                                    .fixedSize(horizontal: true, vertical: false)
+                                
+                                StatusPill(status: invoice.status)
+                                    .fixedSize()
+                            }
+                            
+                            Spacer()
+                        }
                         
-                        StatusBadge(status: invoice.status)
+                        HStack(spacing: 6) {
+                            Text(invoice.clientName)
+                            Text("•")
+                            Text(invoice.formattedInvoiceDate)
+                        }
+                        .font(.system(size: 15, weight: .regular))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
                     }
                     
-                    Text(invoice.clientName)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+                    Spacer()
                     
-                    Text(invoice.formattedInvoiceDate)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-                
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text(invoice.formattedTotal)
-                        .font(.headline)
-                    
-                    if invoice.status == .overdue {
-                        Text("Due: \(invoice.formattedDueDate)")
-                            .font(.caption)
-                            .foregroundColor(.red)
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text(invoice.formattedTotal)
+                            .font(.system(size: 20, weight: .semibold))
+                            .monospacedDigit()
+                            .foregroundColor(.primary)
+                        
+                        if invoice.status == .overdue {
+                            Text("Due: \(invoice.formattedDueDate)")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(.red)
+                        }
                     }
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 16)
             }
-            .padding(.vertical, 4)
         }
         .buttonStyle(PlainButtonStyle())
+        .background(Color.white)
+        .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color(.quaternaryLabel), lineWidth: 1)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(HomeViewColors.accent.opacity(0.15), lineWidth: isPressed ? 2 : 0)
+        )
+        .shadow(color: Color.black.opacity(0.06), radius: 20, x: 0, y: 8)
+        .scaleEffect(isPressed ? 0.98 : 1.0)
+        .animation(.easeInOut(duration: 0.1), value: isPressed)
+        .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
+            isPressed = pressing
+        }, perform: {})
+        .contextMenu {
+            Button {
+                onEdit()
+            } label: {
+                Label("Edit", systemImage: "pencil")
+            }
+            
+            Button {
+                onDuplicate()
+            } label: {
+                Label("Duplicate", systemImage: "doc.on.doc")
+            }
+            
+            Divider()
+            
+            Menu {
+                ForEach(InvoiceStatus.allCases, id: \.self) { status in
+                    Button {
+                        onStatusChange(status)
+                    } label: {
+                        Label(status.rawValue, systemImage: "circle.fill")
+                    }
+                }
+            } label: {
+                Label("Change Status", systemImage: "flag")
+            }
+            
+            Divider()
+            
+            Button(role: .destructive) {
+                onDelete()
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
+    }
+    
+    private var statusColor: Color {
+        switch invoice.status {
+        case .draft: return .gray
+        case .sent: return HomeViewColors.accent
+        case .paid: return .green
+        case .overdue: return .red
+        case .cancelled: return .orange
+        }
     }
 }
 
-// Status badge
-struct StatusBadge: View {
+// Status pill
+struct StatusPill: View {
     let status: InvoiceStatus
     
     var body: some View {
         Text(status.rawValue)
-            .font(.caption)
-            .fontWeight(.medium)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 2)
-            .background(
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(statusColor.opacity(0.2))
-            )
+            .font(.system(size: 14, weight: .medium))
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(statusColor.opacity(0.12))
             .foregroundColor(statusColor)
+            .clipShape(Capsule())
     }
     
     private var statusColor: Color {
         switch status {
         case .draft: return .gray
-        case .sent: return .blue
+        case .sent: return HomeViewColors.accent
         case .paid: return .green
         case .overdue: return .red
         case .cancelled: return .orange
@@ -371,15 +407,19 @@ struct CreateInvoiceButton: View {
             showingCreateInvoice = true
         }) {
             Image(systemName: "plus")
-                .font(.title2)
-                .fontWeight(.semibold)
+                .font(.system(size: 24, weight: .semibold))
                 .foregroundColor(.white)
-                .frame(width: 60, height: 60)
-                .background(Color.blue)
+                .frame(width: 56, height: 56)
+                .background(HomeViewColors.accent)
                 .clipShape(Circle())
-                .shadow(color: Color.black.opacity(0.3), radius: 5, x: 0, y: 2)
+                .shadow(color: Color.black.opacity(0.18), radius: 24, x: 0, y: 12)
         }
     }
+}
+
+// MARK: - Shared Colors
+private enum HomeViewColors {
+    static let accent: Color = Color(red: 0x25/255.0, green: 0x63/255.0, blue: 0xEB/255.0) // #2563EB
 }
 
 #Preview {
