@@ -25,6 +25,10 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             ZStack {
+                // Background
+                Color(.systemGroupedBackground)
+                    .ignoresSafeArea()
+                
                 // Main content
                 if viewModel.invoices.isEmpty && viewModel.searchText.isEmpty {
                     EmptyStateView()
@@ -46,11 +50,13 @@ struct HomeView: View {
                     HStack {
                         Spacer()
                         CreateInvoiceButton(showingCreateInvoice: $showingCreateInvoice)
-                            .padding()
+                            .padding(.trailing, 24)
+                            .padding(.bottom, 24)
                     }
                 }
             }
             .navigationTitle("Invoices")
+            .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
@@ -216,148 +222,213 @@ struct InvoiceListContent: View {
     
     var body: some View {
         List {
-            // Invoices Section
-            Section(header: Text("Invoices")) {
-                ForEach(viewModel.filteredInvoices) { invoice in
-                    InvoiceRowView(
-                        invoice: invoice,
-                        onTap: {
-                            onInvoiceTap(invoice)
-                        }
-                    )
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button(role: .destructive) {
-                            viewModel.deleteInvoice(invoice)
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                        
-                        Button {
-                            selectedInvoice = invoice
-                        } label: {
-                            Label("Edit", systemImage: "pencil")
-                        }
-                        .tint(.blue)
-                        
-                        Button {
-                            _ = viewModel.duplicateInvoice(invoice)
-                        } label: {
-                            Label("Duplicate", systemImage: "doc.on.doc")
-                        }
-                        .tint(.purple)
+            ForEach(viewModel.filteredInvoices) { invoice in
+                InvoiceCardView(
+                    invoice: invoice,
+                    onTap: { onInvoiceTap(invoice) },
+                    onEdit: { selectedInvoice = invoice },
+                    onDelete: { viewModel.deleteInvoice(invoice) },
+                    onDuplicate: { _ = viewModel.duplicateInvoice(invoice) },
+                    onStatusChange: { status in viewModel.updateInvoiceStatus(invoice, status: status) }
+                )
+                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    Button(role: .destructive) {
+                        viewModel.deleteInvoice(invoice)
+                    } label: {
+                        Label("Delete", systemImage: "trash")
                     }
-                    .contextMenu {
-                        Button {
-                            selectedInvoice = invoice
-                        } label: {
-                            Label("Edit", systemImage: "pencil")
-                        }
-                        
-                        Button {
-                            _ = viewModel.duplicateInvoice(invoice)
-                        } label: {
-                            Label("Duplicate", systemImage: "doc.on.doc")
-                        }
-                        
-                        Divider()
-                        
-                        Menu {
-                            ForEach(InvoiceStatus.allCases, id: \.self) { status in
-                                Button {
-                                    viewModel.updateInvoiceStatus(invoice, status: status)
-                                } label: {
-                                    Label(status.rawValue, systemImage: "circle.fill")
-                                }
-                            }
-                        } label: {
-                            Label("Change Status", systemImage: "flag")
-                        }
-                        
-                        Divider()
-                        
-                        Button(role: .destructive) {
-                            viewModel.deleteInvoice(invoice)
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
+                    
+                    Button {
+                        selectedInvoice = invoice
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
                     }
+                                         .tint(StatusColors.sent.color)
+                    
+                    Button {
+                        _ = viewModel.duplicateInvoice(invoice)
+                    } label: {
+                        Label("Duplicate", systemImage: "doc.on.doc")
+                    }
+                    .tint(.purple)
                 }
-                .onDelete(perform: viewModel.deleteInvoices)
+            }
+            .onDelete { indexSet in
+                for index in indexSet {
+                    viewModel.deleteInvoice(viewModel.filteredInvoices[index])
+                }
             }
         }
-        .listStyle(InsetGroupedListStyle())
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
     }
 }
 
 
-// Invoice row view
-struct InvoiceRowView: View {
+// Invoice card view with new styling
+struct InvoiceCardView: View {
     let invoice: Invoice
     let onTap: () -> Void
+    let onEdit: () -> Void
+    let onDelete: () -> Void
+    let onDuplicate: () -> Void
+    let onStatusChange: (InvoiceStatus) -> Void
+    
+    @State private var isPressed = false
     
     var body: some View {
         Button(action: onTap) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text(invoice.invoiceNumber)
-                            .font(.headline)
+            HStack(spacing: 0) {
+                // Status stripe - fills full height and aligns to left edge
+                RoundedRectangle(cornerRadius: 0, style: .continuous)
+                    .fill(statusColor.opacity(0.6))
+                    .frame(width: 3)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 0, style: .continuous)
+                            .stroke(statusColor.opacity(0.8), lineWidth: 0.5)
+                    )
+                
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(alignment: .center, spacing: 0) {
+                            HStack(spacing: 12) {
+                                Text(invoice.invoiceNumber)
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .monospacedDigit()
+                                    .foregroundColor(.primary)
+                                    .layoutPriority(1)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
+                                
+                                StatusPill(status: invoice.status)
+                                    .fixedSize()
+                            }
+                            
+                            Spacer()
+                        }
                         
-                        StatusBadge(status: invoice.status)
+                        HStack(spacing: 6) {
+                            Text(invoice.clientName)
+                            Text("•")
+                            Text(invoice.formattedInvoiceDate)
+                        }
+                        .font(.system(size: 15, weight: .regular))
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
                     }
                     
-                    Text(invoice.clientName)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+                    Spacer()
                     
-                    Text(invoice.formattedInvoiceDate)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-                
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text(invoice.formattedTotal)
-                        .font(.headline)
-                    
-                    if invoice.status == .overdue {
-                        Text("Due: \(invoice.formattedDueDate)")
-                            .font(.caption)
-                            .foregroundColor(.red)
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text(invoice.formattedTotal)
+                            .font(.system(size: 21, weight: .semibold))
+                            .monospacedDigit()
+                            .foregroundColor(invoice.status == .overdue ? StatusColors.overdue.color : .primary)
+                        
+                        if invoice.status == .overdue {
+                            Text("Due: \(invoice.formattedDueDate)")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(StatusColors.overdue.color)
+                        }
                     }
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 16)
+                .frame(minHeight: 80) // Ensure consistent card height
             }
-            .padding(.vertical, 4)
         }
         .buttonStyle(PlainButtonStyle())
+        .background(Color.white)
+        .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color(.quaternaryLabel), lineWidth: 1)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(StatusColors.sent.color.opacity(0.12), lineWidth: isPressed ? 2 : 0)
+        )
+        .shadow(color: Color.black.opacity(0.06), radius: 20, x: 0, y: 8)
+        .scaleEffect(isPressed ? 0.98 : 1.0)
+        .animation(.easeInOut(duration: 0.1), value: isPressed)
+        .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
+            isPressed = pressing
+        }, perform: {})
+        .contextMenu {
+            Button {
+                onEdit()
+            } label: {
+                Label("Edit", systemImage: "pencil")
+            }
+            
+            Button {
+                onDuplicate()
+            } label: {
+                Label("Duplicate", systemImage: "doc.on.doc")
+            }
+            
+            Divider()
+            
+            Menu {
+                ForEach(InvoiceStatus.allCases, id: \.self) { status in
+                    Button {
+                        onStatusChange(status)
+                    } label: {
+                        Label(status.rawValue, systemImage: "circle.fill")
+                    }
+                }
+            } label: {
+                Label("Change Status", systemImage: "flag")
+            }
+            
+            Divider()
+            
+            Button(role: .destructive) {
+                onDelete()
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
+    }
+    
+    private var statusColor: Color {
+        switch invoice.status {
+        case .draft: return StatusColors.draft.color
+        case .sent: return StatusColors.sent.color
+        case .paid: return StatusColors.paid.color
+        case .overdue: return StatusColors.overdue.color
+        case .cancelled: return StatusColors.cancelled.color
+        }
     }
 }
 
-// Status badge
-struct StatusBadge: View {
+// Status pill
+struct StatusPill: View {
     let status: InvoiceStatus
     
     var body: some View {
         Text(status.rawValue)
-            .font(.caption)
-            .fontWeight(.medium)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 2)
-            .background(
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(statusColor.opacity(0.2))
-            )
-            .foregroundColor(statusColor)
+            .font(.system(size: 11, weight: .medium))
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 4)
+            .frame(height: 22)
+            .background(statusColor.fill)
+            .foregroundColor(statusColor.color)
+            .clipShape(Capsule())
     }
     
-    private var statusColor: Color {
+    private var statusColor: StatusColors {
         switch status {
-        case .draft: return .gray
-        case .sent: return .blue
-        case .paid: return .green
-        case .overdue: return .red
-        case .cancelled: return .orange
+        case .draft: return StatusColors.draft
+        case .sent: return StatusColors.sent
+        case .paid: return StatusColors.paid
+        case .overdue: return StatusColors.overdue
+        case .cancelled: return StatusColors.cancelled
         }
     }
 }
@@ -371,14 +442,70 @@ struct CreateInvoiceButton: View {
             showingCreateInvoice = true
         }) {
             Image(systemName: "plus")
-                .font(.title2)
-                .fontWeight(.semibold)
+                .font(.system(size: 24, weight: .semibold))
                 .foregroundColor(.white)
-                .frame(width: 60, height: 60)
-                .background(Color.blue)
+                .frame(width: 56, height: 56)
+                .background(
+                    LinearGradient(
+                        colors: [StatusColors.sent.color, StatusColors.sent.color.opacity(0.9)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
                 .clipShape(Circle())
-                .shadow(color: Color.black.opacity(0.3), radius: 5, x: 0, y: 2)
+                .shadow(color: Color.black.opacity(0.18), radius: 24, x: 0, y: 12)
         }
+    }
+}
+
+// MARK: - Shared Colors
+private enum HomeViewColors {
+    static let accent: Color = Color(red: 0x25/255.0, green: 0x63/255.0, blue: 0xEB/255.0) // #2563EB
+}
+
+// MARK: - Status Colors (soft + accessible)
+private enum StatusColors {
+    case draft, sent, paid, cancelled, overdue
+    
+    var color: Color {
+        switch self {
+        case .draft: return Color(hex: "#9CA3AF")
+        case .sent: return Color(hex: "#2563EB")
+        case .paid: return Color(hex: "#16A34A")
+        case .cancelled: return Color(hex: "#F59E0B")
+        case .overdue: return Color(hex: "#EF4444")
+        }
+    }
+    
+    var fill: Color {
+        switch self {
+        case .draft: return Color(hex: "#9CA3AF").opacity(0.08)
+        case .sent: return Color(hex: "#2563EB").opacity(0.08)
+        case .paid: return Color(hex: "#16A34A").opacity(0.08)
+        case .cancelled: return Color(hex: "#F59E0B").opacity(0.08)
+        case .overdue: return Color(hex: "#EF4444").opacity(0.08)
+        }
+    }
+}
+
+private extension Color {
+    init(hex: String) {
+        let r, g, b, a: Double
+        var hexString = hex.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        if hexString.hasPrefix("#") { hexString.removeFirst() }
+        if hexString.count == 6 { hexString.append("FF") }
+
+        let scanner = Scanner(string: hexString)
+        var hexNumber: UInt64 = 0
+        if scanner.scanHexInt64(&hexNumber) {
+            r = Double((hexNumber & 0xFF000000) >> 24) / 255
+            g = Double((hexNumber & 0x00FF0000) >> 16) / 255
+            b = Double((hexNumber & 0x0000FF00) >> 8) / 255
+            a = Double(hexNumber & 0x000000FF) / 255
+        } else {
+            r = 1; g = 1; b = 1; a = 1
+        }
+        self.init(.sRGB, red: r, green: g, blue: b, opacity: a)
     }
 }
 
