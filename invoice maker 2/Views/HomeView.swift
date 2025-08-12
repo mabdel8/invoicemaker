@@ -246,7 +246,7 @@ struct InvoiceListContent: View {
                     } label: {
                         Label("Edit", systemImage: "pencil")
                     }
-                    .tint(HomeViewColors.accent)
+                                         .tint(StatusColors.sent.color)
                     
                     Button {
                         _ = viewModel.duplicateInvoice(invoice)
@@ -283,9 +283,13 @@ struct InvoiceCardView: View {
         Button(action: onTap) {
             HStack(spacing: 0) {
                 // Status stripe
-                Rectangle()
-                    .fill(statusColor)
-                    .frame(width: 4)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(statusColor.opacity(0.6))
+                    .frame(width: 3)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .stroke(statusColor.opacity(0.8), lineWidth: 0.5)
+                    )
                 
                 HStack(spacing: 16) {
                     VStack(alignment: .leading, spacing: 8) {
@@ -293,8 +297,9 @@ struct InvoiceCardView: View {
                             HStack(spacing: 12) {
                                 Text(invoice.invoiceNumber)
                                     .font(.system(size: 17, weight: .semibold))
+                                    .monospacedDigit()
                                     .foregroundColor(.primary)
-                                    .fixedSize(horizontal: true, vertical: false)
+                                    .layoutPriority(1)
                                 
                                 StatusPill(status: invoice.status)
                                     .fixedSize()
@@ -317,14 +322,14 @@ struct InvoiceCardView: View {
                     
                     VStack(alignment: .trailing, spacing: 4) {
                         Text(invoice.formattedTotal)
-                            .font(.system(size: 20, weight: .semibold))
+                            .font(.system(size: 21, weight: .semibold))
                             .monospacedDigit()
-                            .foregroundColor(.primary)
+                            .foregroundColor(invoice.status == .overdue ? StatusColors.overdue.color : .primary)
                         
                         if invoice.status == .overdue {
                             Text("Due: \(invoice.formattedDueDate)")
                                 .font(.system(size: 13, weight: .medium))
-                                .foregroundColor(.red)
+                                .foregroundColor(StatusColors.overdue.color)
                         }
                     }
                 }
@@ -342,7 +347,7 @@ struct InvoiceCardView: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(HomeViewColors.accent.opacity(0.15), lineWidth: isPressed ? 2 : 0)
+                .stroke(StatusColors.sent.color.opacity(0.12), lineWidth: isPressed ? 2 : 0)
         )
         .shadow(color: Color.black.opacity(0.06), radius: 20, x: 0, y: 8)
         .scaleEffect(isPressed ? 0.98 : 1.0)
@@ -389,11 +394,11 @@ struct InvoiceCardView: View {
     
     private var statusColor: Color {
         switch invoice.status {
-        case .draft: return .gray
-        case .sent: return HomeViewColors.accent
-        case .paid: return .green
-        case .overdue: return .red
-        case .cancelled: return .orange
+        case .draft: return StatusColors.draft.color
+        case .sent: return StatusColors.sent.color
+        case .paid: return StatusColors.paid.color
+        case .overdue: return StatusColors.overdue.color
+        case .cancelled: return StatusColors.cancelled.color
         }
     }
 }
@@ -404,23 +409,24 @@ struct StatusPill: View {
     
     var body: some View {
         Text(status.rawValue)
-            .font(.system(size: 14, weight: .medium))
+            .font(.system(size: 11, weight: .medium))
             .lineLimit(1)
             .fixedSize(horizontal: true, vertical: false)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(statusColor.opacity(0.12))
-            .foregroundColor(statusColor)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 4)
+            .frame(height: 22)
+            .background(statusColor.fill)
+            .foregroundColor(statusColor.color)
             .clipShape(Capsule())
     }
     
-    private var statusColor: Color {
+    private var statusColor: StatusColors {
         switch status {
-        case .draft: return .gray
-        case .sent: return HomeViewColors.accent
-        case .paid: return .green
-        case .overdue: return .red
-        case .cancelled: return .orange
+        case .draft: return StatusColors.draft
+        case .sent: return StatusColors.sent
+        case .paid: return StatusColors.paid
+        case .overdue: return StatusColors.overdue
+        case .cancelled: return StatusColors.cancelled
         }
     }
 }
@@ -437,7 +443,13 @@ struct CreateInvoiceButton: View {
                 .font(.system(size: 24, weight: .semibold))
                 .foregroundColor(.white)
                 .frame(width: 56, height: 56)
-                .background(HomeViewColors.accent)
+                .background(
+                    LinearGradient(
+                        colors: [StatusColors.sent.color, StatusColors.sent.color.opacity(0.9)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
                 .clipShape(Circle())
                 .shadow(color: Color.black.opacity(0.18), radius: 24, x: 0, y: 12)
         }
@@ -447,6 +459,52 @@ struct CreateInvoiceButton: View {
 // MARK: - Shared Colors
 private enum HomeViewColors {
     static let accent: Color = Color(red: 0x25/255.0, green: 0x63/255.0, blue: 0xEB/255.0) // #2563EB
+}
+
+// MARK: - Status Colors (soft + accessible)
+private enum StatusColors {
+    case draft, sent, paid, cancelled, overdue
+    
+    var color: Color {
+        switch self {
+        case .draft: return Color(hex: "#9CA3AF")
+        case .sent: return Color(hex: "#2563EB")
+        case .paid: return Color(hex: "#16A34A")
+        case .cancelled: return Color(hex: "#F59E0B")
+        case .overdue: return Color(hex: "#EF4444")
+        }
+    }
+    
+    var fill: Color {
+        switch self {
+        case .draft: return Color(hex: "#9CA3AF").opacity(0.08)
+        case .sent: return Color(hex: "#2563EB").opacity(0.08)
+        case .paid: return Color(hex: "#16A34A").opacity(0.08)
+        case .cancelled: return Color(hex: "#F59E0B").opacity(0.08)
+        case .overdue: return Color(hex: "#EF4444").opacity(0.08)
+        }
+    }
+}
+
+private extension Color {
+    init(hex: String) {
+        let r, g, b, a: Double
+        var hexString = hex.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        if hexString.hasPrefix("#") { hexString.removeFirst() }
+        if hexString.count == 6 { hexString.append("FF") }
+
+        let scanner = Scanner(string: hexString)
+        var hexNumber: UInt64 = 0
+        if scanner.scanHexInt64(&hexNumber) {
+            r = Double((hexNumber & 0xFF000000) >> 24) / 255
+            g = Double((hexNumber & 0x00FF0000) >> 16) / 255
+            b = Double((hexNumber & 0x0000FF00) >> 8) / 255
+            a = Double(hexNumber & 0x000000FF) / 255
+        } else {
+            r = 1; g = 1; b = 1; a = 1
+        }
+        self.init(.sRGB, red: r, green: g, blue: b, opacity: a)
+    }
 }
 
 #Preview {
