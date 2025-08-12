@@ -7,6 +7,7 @@
 
 import SwiftUI
 import PDFKit
+import UniformTypeIdentifiers
 
 struct PDFPreviewView: View {
     let pdfDocument: PDFDocument
@@ -19,6 +20,8 @@ struct PDFPreviewView: View {
     @State private var showingExportSuccess = false
     @State private var exportError: String?
     @State private var showingPaywall = false
+    @State private var showingFileExporter = false
+    @State private var exportURL: URL?
     
     var body: some View {
         NavigationStack {
@@ -138,6 +141,23 @@ struct PDFPreviewView: View {
             .fullScreenCover(isPresented: $showingPaywall) {
                 PaywallView(isModal: true)
             }
+            .fileExporter(
+                isPresented: $showingFileExporter,
+                document: exportURL.map { PDFFile(url: $0) },
+                contentType: .pdf,
+                defaultFilename: "Invoice_\(invoice.invoiceNumber)"
+            ) { result in
+                switch result {
+                case .success(let url):
+                    showingExportSuccess = true
+                    // Clean up temporary file
+                    if let tempURL = exportURL {
+                        try? FileManager.default.removeItem(at: tempURL)
+                    }
+                case .failure(let error):
+                    exportError = "Export failed: \(error.localizedDescription)"
+                }
+            }
             .alert("Export Successful", isPresented: $showingExportSuccess) {
                 Button("OK") { }
             } message: {
@@ -159,17 +179,17 @@ struct PDFPreviewView: View {
             return
         }
         
-        // Get documents directory
-        let documentsPath = FileManager.default.urls(for: .documentDirectory,
-                                                     in: .userDomainMask)[0]
+        // Create temporary file for export
+        let tempDirectory = FileManager.default.temporaryDirectory
         let fileName = "Invoice_\(invoice.invoiceNumber).pdf"
-        let fileURL = documentsPath.appendingPathComponent(fileName)
+        let tempURL = tempDirectory.appendingPathComponent(fileName)
         
         do {
-            try data.write(to: fileURL)
-            showingExportSuccess = true
+            try data.write(to: tempURL)
+            exportURL = tempURL
+            showingFileExporter = true
         } catch {
-            exportError = "Failed to save PDF: \(error.localizedDescription)"
+            exportError = "Failed to prepare PDF for export: \(error.localizedDescription)"
         }
     }
 }
@@ -325,6 +345,26 @@ struct ShareSheet: UIViewControllerRepresentable {
     }
     
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+}
+
+// PDF File document for file exporter
+struct PDFFile: FileDocument {
+    static var readableContentTypes: [UTType] { [.pdf] }
+    
+    let url: URL
+    
+    init(url: URL) {
+        self.url = url
+    }
+    
+    init(configuration: ReadConfiguration) throws {
+        // This is required by FileDocument but we don't use it for export-only files
+        throw CocoaError(.fileReadCorruptFile)
+    }
+    
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        return try FileWrapper(url: url)
+    }
 }
 
 #Preview {

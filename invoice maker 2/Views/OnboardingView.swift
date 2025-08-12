@@ -31,65 +31,74 @@ struct OnboardingView: View {
                 // App icon and title
                 VStack(spacing: 20) {
                     // App icon placeholder - replace with your app icon
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.blue, Color.purple],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 80, height: 80)
-                        .overlay(
-                            Image(systemName: "doc.text.fill")
-                                .font(.system(size: 35, weight: .medium))
-                                .foregroundColor(.white)
-                        )
+//                    Image("invoicemakericon")
+//                        .resizable()
+//                        .aspectRatio(contentMode: .fit)
+//                        .frame(width: 80, height: 80)
+//                        .cornerRadius(16)
+//                        .shadow(color: .black.opacity(0.1), radius: 8, y: 4)
+                    
                     
                     VStack(spacing: 8) {
                         Text("Invoice Maker Pro")
                             .font(.largeTitle)
-                            .fontWeight(.bold)
+                            .fontWeight(.light)
                             .multilineTextAlignment(.center)
                         
                         Text("Create professional invoices in seconds")
                             .font(.title3)
                             .foregroundColor(.secondary)
+                            .fontWeight(.light)
                             .multilineTextAlignment(.center)
                     }
                 }
                 
+                Image("laurel")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(height: 48)
+                    .cornerRadius(16)
+                    .shadow(color: .black.opacity(0.1), radius: 8, y: 4)
+                
+                Image("invoiceexample")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(height: 400)
+                    .cornerRadius(16)
+                    .shadow(color: .black.opacity(0.1), radius: 8, y: 4)
+                    .padding(.horizontal, 20)
+                
                 // Features
-                VStack(spacing: 30) {
-                    OnboardingFeature(
-                        icon: "doc.text.fill",
-                        iconColor: .blue,
-                        title: "Professional Templates",
-                        description: "Create beautiful, professional invoices with our polished templates"
-                    )
-                    
-                    OnboardingFeature(
-                        icon: "square.and.arrow.up.fill",
-                        iconColor: .green,
-                        title: "Export & Share",
-                        description: "Generate PDFs and share invoices directly with your clients"
-                    )
-                    
-                    OnboardingFeature(
-                        icon: "chart.bar.fill",
-                        iconColor: .purple,
-                        title: "Track Status",
-                        description: "Keep track of draft, sent, paid, and overdue invoices"
-                    )
-                    
-                    OnboardingFeature(
-                        icon: "icloud.fill",
-                        iconColor: .cyan,
-                        title: "Sync Everywhere",
-                        description: "Your invoices are automatically saved and synced across devices"
-                    )
-                }
-                .padding(.horizontal)
+//                VStack(spacing: 30) {
+//                    OnboardingFeature(
+//                        icon: "doc.text.fill",
+//                        iconColor: .blue,
+//                        title: "Professional Templates",
+//                        description: "Create beautiful, professional invoices with our polished templates"
+//                    )
+//                    
+//                    OnboardingFeature(
+//                        icon: "square.and.arrow.up.fill",
+//                        iconColor: .green,
+//                        title: "Export & Share",
+//                        description: "Generate PDFs and share invoices directly with your clients"
+//                    )
+//                    
+//                    OnboardingFeature(
+//                        icon: "chart.bar.fill",
+//                        iconColor: .purple,
+//                        title: "Track Status",
+//                        description: "Keep track of draft, sent, paid, and overdue invoices"
+//                    )
+//                    
+//                    OnboardingFeature(
+//                        icon: "icloud.fill",
+//                        iconColor: .cyan,
+//                        title: "Sync Everywhere",
+//                        description: "Your invoices are automatically saved and synced across devices"
+//                    )
+//                }
+//                .padding(.horizontal)
                 
                 Spacer()
                 

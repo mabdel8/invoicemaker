@@ -178,32 +178,49 @@ struct PaywallView: View {
                             .disabled(isPurchasing || storeManager.products.isEmpty)
                             .padding(.horizontal, 24)
                             
-                            // Restore purchases
-                            Button("Restore Purchases") {
-                                Task {
-                                    await storeManager.restorePurchases()
+                            // Restore purchases and legal links
+                            HStack(spacing: 12) {
+                                Button("Restore Purchases") {
+                                    Task {
+                                        await storeManager.restorePurchases()
+                                    }
                                 }
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                
+                                Text("•")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                
+                                Link("Privacy Policy", destination: URL(string: "https://abdalla2024.github.io/InvoiceMaker/#/privacy")!)
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                
+                                Text("•")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                
+                                Link("Terms of Use", destination: URL(string: "https://abdalla2024.github.io/InvoiceMaker/#/terms")!)
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
                             }
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 24)
                         }
                         
-                        // Terms and privacy
-                        VStack(spacing: 8) {
-                            Text("By continuing, you agree to our Terms of Service and Privacy Policy")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .multilineTextAlignment(.center)
-                            
-                            if selectedProductID == "im_weekly_599" {
+                        // Subscription terms only
+                        if selectedProductID == "im_weekly_599" {
+                            VStack(spacing: 8) {
                                 Text("Subscription automatically renews unless auto-renew is turned off at least 24-hours before the end of the current period")
                                     .font(.caption2)
                                     .foregroundColor(.secondary)
                                     .multilineTextAlignment(.center)
                             }
+                            .padding(.horizontal, 24)
+                            .padding(.bottom, 20)
+                        } else {
+                            Spacer()
+                                .frame(height: 20)
                         }
-                        .padding(.horizontal, 24)
-                        .padding(.bottom, 20)
                     }
                 }
             }
@@ -296,7 +313,7 @@ struct PricingCard: View {
                                 .foregroundColor(.secondary)
                                 .strikethrough()
                             Text(product.displayPrice)
-                                .font(.title3)
+                                .font(.subheadline)
                                 .fontWeight(.semibold)
                                 .foregroundColor(.primary)
                         }
