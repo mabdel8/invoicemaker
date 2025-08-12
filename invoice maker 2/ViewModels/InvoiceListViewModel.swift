@@ -141,7 +141,6 @@ class InvoiceListViewModel: ObservableObject {
         newInvoice.clientEmail = invoice.clientEmail
         
         newInvoice.taxRate = invoice.taxRate
-        newInvoice.paymentTerms = invoice.paymentTerms
         newInvoice.notes = invoice.notes
         
         // Copy items

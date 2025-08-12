@@ -91,6 +91,24 @@ struct InvoiceDetailView: View {
             }
             .navigationTitle("Invoice #\(invoice.invoiceNumber)")
             .navigationBarTitleDisplayMode(.inline)
+            .safeAreaInset(edge: .top) {
+                // Status bar at the top
+                HStack {
+                    Label(invoice.status.rawValue, systemImage: statusIcon(for: invoice.status))
+                        .font(.caption)
+                        .fontWeight(.semibold)
+                        .foregroundColor(Color(statusColor(for: invoice.status)))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color(statusColor(for: invoice.status)).opacity(0.1))
+                        .cornerRadius(8)
+                    
+                    Spacer()
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                .background(Color(.systemBackground))
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Back") {
@@ -185,7 +203,6 @@ struct InvoiceDetailView: View {
         data.invoiceNumber = invoice.invoiceNumber
         data.invoiceDate = invoice.formattedInvoiceDate
         data.dueDate = invoice.formattedDueDate
-        data.paymentTerms = invoice.paymentTerms
         
         // Financial
         data.subtotal = invoice.formattedSubtotal
@@ -207,6 +224,26 @@ struct InvoiceDetailView: View {
         
         return data
     }
+}
+
+// MARK: - Helper Functions
+private func statusIcon(for status: InvoiceStatus) -> String {
+    switch status {
+    case .draft:
+        return "doc.text"
+    case .sent:
+        return "paperplane"
+    case .paid:
+        return "checkmark.circle.fill"
+    case .overdue:
+        return "exclamationmark.triangle"
+    case .cancelled:
+        return "xmark.circle"
+    }
+}
+
+private func statusColor(for status: InvoiceStatus) -> String {
+    return status.color
 }
 
 #Preview {

@@ -251,7 +251,6 @@ class InvoiceFormViewModel: ObservableObject {
         data.invoiceNumber = invoice.invoiceNumber
         data.invoiceDate = invoice.formattedInvoiceDate
         data.dueDate = invoice.formattedDueDate
-        data.paymentTerms = invoice.paymentTerms
         
         // Financial
         data.subtotal = invoice.formattedSubtotal
@@ -273,15 +272,4 @@ class InvoiceFormViewModel: ObservableObject {
         
         return data
     }
-    
-    // Payment terms options
-    let paymentTermsOptions = [
-        "Due on Receipt",
-        "NET-7",
-        "NET-15",
-        "NET-30",
-        "NET-45",
-        "NET-60",
-        "NET-90"
-    ]
 }
