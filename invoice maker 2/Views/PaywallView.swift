@@ -89,51 +89,42 @@ struct PaywallView: View {
                                 .shadow(color: .black.opacity(0.1), radius: 8, y: 4)
                                 .padding(.horizontal, 20)
                         }
-                        // Features
-                        VStack(spacing: 20) {
-                            PaywallFeature(
-                                icon: "infinity",
-                                title: "Unlimited Invoices"
-                            )
-                            
-                            PaywallFeature(
-                                icon: "square.and.arrow.up.fill",
-                                title: "PDF Export & Share"
-                            )
+                        // Features - centered
+                        HStack {
+                            Spacer()
+                            VStack(spacing: 20) {
+                                PaywallFeature(
+                                    icon: "infinity",
+                                    title: "Unlimited Invoices"
+                                )
+                                
+                                PaywallFeature(
+                                    icon: "square.and.arrow.up.fill",
+                                    title: "PDF Export & Share"
+                                )
+                            }
+                            Spacer()
                         }
                         .padding(.horizontal, 24)
-                        .frame(maxWidth: .infinity)
 
                         
-                        // Free trial toggle
-                        VStack(spacing: 16) {
-                            HStack {
-                                Image(systemName: "gift.fill")
-                                    .foregroundColor(.green)
-                                Text("Free Trial ")
-                                    .font(.headline)
-                                    .fontWeight(.semibold)
-                                Spacer()
-                                Toggle("", isOn: $isWeeklySelected)
-                                    .tint(.green)
-                                    .onChange(of: isWeeklySelected) { _, newValue in
-                                        selectedProductID = newValue ? "im_weekly_599" : "im_lifetime"
-                                    }
-                            }
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 12)
-                            .background(Color.green.opacity(0.1))
-                            .cornerRadius(12)
-                            .padding(.horizontal, 24)
-                            
-//                            if isWeeklySelected {
-//                                Text("Start with a 7-day free trial, then continue with weekly plan")
-//                                    .font(.caption)
-//                                    .foregroundColor(.secondary)
-//                                    .multilineTextAlignment(.center)
-//                                    .padding(.horizontal, 24)
-//                            }
+                        // Free trial toggle - compact
+                        HStack {
+                            Text("Free Trial Enabled")
+                                .font(.headline)
+                                .fontWeight(.medium)
+                            Spacer()
+                            Toggle("", isOn: $isWeeklySelected)
+                                .tint(.black)
+                                .onChange(of: isWeeklySelected) { _, newValue in
+                                    selectedProductID = newValue ? "im_weekly_599" : "im_lifetime"
+                                }
                         }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 8)
+                        .background(Color.gray.opacity(0.1))
+                        .cornerRadius(8)
+                        .padding(.horizontal, 24)
                         
                         // Pricing plans
                         if !storeManager.products.isEmpty {
@@ -268,7 +259,6 @@ struct PaywallFeature: View {
     
     var body: some View {
         HStack(spacing: 16) {
-
             Image(systemName: icon)
                 .font(.system(size: 18, weight: .medium))
                 .foregroundColor(.purple)
@@ -276,9 +266,6 @@ struct PaywallFeature: View {
             Text(title)
                 .font(.headline)
                 .fontWeight(.semibold)
-
-            
-            Spacer()
         }
     }
 }
@@ -291,66 +278,65 @@ struct PricingCard: View {
     
     var body: some View {
         Button(action: onSelect) {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Text(planTitle)
-                                .font(.headline)
-                                .fontWeight(.bold)
-                            
-                            if product.id == "im_lifetime" {
-                                Text("BEST VALUE")
-                                    .font(.caption2)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 2)
-                                    .background(Color.green)
-                                    .cornerRadius(4)
-                            }
-                        }
-                        
-                        Text(product.displayPrice)
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.primary)
-                        
-                        if product.id == "im_weekly_599" {
-                            Text("3-day free trial, then \(product.displayPrice)/week")
-                                .font(.caption)
-                                .foregroundColor(.green)
-                        } else if product.id == "im_weekly_599" {
-                            Text("per week")
-                                .font(.caption)
+            HStack(spacing: 16) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(planTitle)
+                        .font(.title3)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                    
+                    if product.id == "im_weekly_599" {
+                        Text("then $5.99 per week")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    } else {
+                        HStack(spacing: 8) {
+                            Text("$249.99")
+                                .font(.subheadline)
                                 .foregroundColor(.secondary)
+                                .strikethrough()
+                            Text(product.displayPrice)
+                                .font(.title3)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.primary)
                         }
                     }
-                    
-                    Spacer()
-                    
-                    Circle()
-                        .stroke(isSelected ? Color.purple : Color.secondary.opacity(0.3), lineWidth: 2)
-                        .frame(width: 20, height: 20)
-                        .overlay(
-                            Circle()
-                                .fill(Color.purple)
-                                .frame(width: 12, height: 12)
-                                .opacity(isSelected ? 1 : 0)
-                        )
                 }
                 
+                Spacer()
+                
+                // Best value badge for lifetime
+                if product.id == "im_lifetime" {
+                    Text("BEST VALUE")
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 4)
+                        .background(Color.black)
+                        .cornerRadius(12)
+                }
+                
+                // Selection indicator
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.title3)
+                        .foregroundColor(.black)
+                } else {
+                    Circle()
+                        .stroke(Color.gray.opacity(0.4), lineWidth: 1.5)
+                        .frame(width: 24, height: 24)
+                }
             }
-            .padding(16)
+            .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .frame(height: 90)
-            .background(Color.white)
+            .frame(height: 70)
+            .background(isSelected ? Color.blue.opacity(0.05) : Color.white)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                    .stroke(isSelected ? Color.blue : Color.gray.opacity(0.3), lineWidth: isSelected ? 2 : 1)
             )
             .cornerRadius(12)
-            .shadow(color: Color.black.opacity(0.05), radius: 2, y: 1)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -358,9 +344,9 @@ struct PricingCard: View {
     private var planTitle: String {
         switch product.id {
         case "im_weekly_599":
-            return "Weekly Plan"
+            return "3-Day Trial"
         case "im_lifetime":
-            return "Lifetime Access"
+            return "Lifetime Plan"
         default:
             return "Premium Plan"
         }
