@@ -221,23 +221,49 @@ struct InvoiceListContent: View {
     let onInvoiceTap: (Invoice) -> Void
     
     var body: some View {
-        ScrollView {
-            LazyVStack(spacing: 16) {
-                ForEach(viewModel.filteredInvoices) { invoice in
-                    InvoiceCardView(
-                        invoice: invoice,
-                        onTap: { onInvoiceTap(invoice) },
-                        onEdit: { selectedInvoice = invoice },
-                        onDelete: { viewModel.deleteInvoice(invoice) },
-                        onDuplicate: { _ = viewModel.duplicateInvoice(invoice) },
-                        onStatusChange: { status in viewModel.updateInvoiceStatus(invoice, status: status) }
-                    )
+        List {
+            ForEach(viewModel.filteredInvoices) { invoice in
+                InvoiceCardView(
+                    invoice: invoice,
+                    onTap: { onInvoiceTap(invoice) },
+                    onEdit: { selectedInvoice = invoice },
+                    onDelete: { viewModel.deleteInvoice(invoice) },
+                    onDuplicate: { _ = viewModel.duplicateInvoice(invoice) },
+                    onStatusChange: { status in viewModel.updateInvoiceStatus(invoice, status: status) }
+                )
+                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    Button(role: .destructive) {
+                        viewModel.deleteInvoice(invoice)
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                    
+                    Button {
+                        selectedInvoice = invoice
+                    } label: {
+                        Label("Edit", systemImage: "pencil")
+                    }
+                    .tint(HomeViewColors.accent)
+                    
+                    Button {
+                        _ = viewModel.duplicateInvoice(invoice)
+                    } label: {
+                        Label("Duplicate", systemImage: "doc.on.doc")
+                    }
+                    .tint(.purple)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
-            .padding(.bottom, 100) // Space for FAB
+            .onDelete { indexSet in
+                for index in indexSet {
+                    viewModel.deleteInvoice(viewModel.filteredInvoices[index])
+                }
+            }
         }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
     }
 }
 
@@ -304,6 +330,7 @@ struct InvoiceCardView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 16)
+                .frame(minHeight: 80) // Ensure consistent card height
             }
         }
         .buttonStyle(PlainButtonStyle())
